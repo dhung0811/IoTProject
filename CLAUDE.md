@@ -14,12 +14,12 @@ Realtime IoT health monitoring platform that collects biometric telemetry (heart
 | Ingestion API | FastAPI (Python) |
 | Message Queue | RabbitMQ (MVP) or Kafka (production) |
 | Stream Processing | Python async workers |
-| Time-Series DB | InfluxDB |
-| AI Alert Service | Python service via Gemini API |
+| Time-Series DB | VictoriaMetrics or InfluxDB |
+| AI Alert Service | Python ML services |
 | WebSocket Gateway | FastAPI WebSockets or dedicated service |
 | Frontend | Next.js |
 | Observability | Prometheus + Grafana |
-| Deployment | Docker + Kubernetes |
+| Deployment | Docker |
 
 ## Data Flow
 
@@ -32,9 +32,12 @@ ESP32 Sensor → FastAPI (POST /api/v1/metrics) → RabbitMQ/Kafka → Stream Pr
 ```json
 {
   "device_id": "esp32-001",
+  "user_id": "user-123",
   "timestamp": "2026-05-19T14:30:15Z",
   "heartrate": 76.3,
-  "spO2": 98.4
+  "spO2": 98.4,
+  "battery": 82,
+  "signal_quality": 0.94
 }
 ```
 
@@ -48,15 +51,18 @@ ESP32 Sensor → FastAPI (POST /api/v1/metrics) → RabbitMQ/Kafka → Stream Pr
 ```python
 class HealthMetric(BaseModel):
     device_id: str
+    user_id: str
     timestamp: datetime
     heartrate: float
     spO2: float
+    battery: int
+    signal_quality: float
 ```
 
 ## Key Design Decisions
 
 - **RabbitMQ over Kafka for MVP** — simpler setup; switch to Kafka when throughput demands it
-- **InfluxDB chosen** for time-series storage — use InfluxDB v2 client (`influxdb-client` Python package) with Flux or InfluxQL queries
-- **AI alerts via Gemini API** — use existing `GEMINI_API_KEY`; call Gemini for anomaly interpretation and health trend analysis rather than building a custom ML model
+- **Time-series DB required** — standard relational DBs are not appropriate for this use case; VictoriaMetrics or InfluxDB preferred
 - **WebSocket for frontend** — polling is explicitly rejected in favor of push-based updates
+- **Signal quality field** — used to filter noisy sensor readings before processing
 - **All services must run on Linux** — develop with Docker to avoid macOS-specific issues

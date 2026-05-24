@@ -1,11 +1,11 @@
 import logging
 
-import aio_pika
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.config import settings
+from app.messaging import publish_fanout
 from app.models import HealthMetric
+from app.registry import DeviceStatus, get_status
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -13,24 +13,14 @@ logger = logging.getLogger(__name__)
 
 @router.post("/metrics", status_code=202)
 async def ingest_metric(metric: HealthMetric):
-    payload = metric.model_dump_json()
+    status = get_status(metric.device_id)
 
+    if status != DeviceStatus.APPROVED:
+        raise HTTPException(status_code=403, detail="Device not approved. Use /api/v1/connect first.")
+
+    # APPROVED — publish metric
     try:
-        connection = await aio_pika.connect_robust(settings.rabbitmq_url)
-        async with connection:
-            channel = await connection.channel()
-            exchange = await channel.declare_exchange(
-                settings.rabbitmq_exchange,
-                aio_pika.ExchangeType.FANOUT,
-                durable=True,
-            )
-            await exchange.publish(
-                aio_pika.Message(
-                    body=payload.encode(),
-                    delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-                ),
-                routing_key="",
-            )
+        await publish_fanout(metric.model_dump_json().encode())
     except Exception as e:
         logger.error("Failed to publish to RabbitMQ: %s", e)
         raise HTTPException(status_code=503, detail="Message queue unavailable")

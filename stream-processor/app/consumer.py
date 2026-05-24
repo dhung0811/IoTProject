@@ -16,6 +16,8 @@ async def handle_message(message: aio_pika.IncomingMessage) -> None:
     async with message.process(requeue=True):
         try:
             payload = json.loads(message.body)
+            if payload.get("type") is not None:
+                return
             metric = process(payload)
             await write(metric)
 

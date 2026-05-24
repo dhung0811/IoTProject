@@ -34,6 +34,7 @@ function deriveStatus(heartrate: number, spO2: number, backendStatus?: string): 
 export function useMetricsStream(url: string) {
   const [devices, setDevices] = useState<DeviceMap>({});
   const [connected, setConnected] = useState(false);
+  const [pendingApprovals, setPendingApprovals] = useState<string[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -56,7 +57,17 @@ export function useMetricsStream(url: string) {
 
       ws.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data as string) as {
+          const msg = JSON.parse(event.data as string) as Record<string, unknown>;
+
+          if (msg.type === 'device_approval_request') {
+            const deviceId = msg.device_id as string;
+            setPendingApprovals((prev) =>
+              prev.includes(deviceId) ? prev : [...prev, deviceId]
+            );
+            return;
+          }
+
+          const { device_id, timestamp, heartrate, spO2, status, connected: devConnected } = msg as {
             device_id: string;
             timestamp: string;
             heartrate: number;
@@ -65,9 +76,7 @@ export function useMetricsStream(url: string) {
             connected?: boolean;
           };
 
-          const { device_id, timestamp, heartrate, spO2, status, connected: devConnected } = msg;
-
-          const time = new Date(timestamp).toLocaleTimeString('en-GB', {
+          const time = new Date(timestamp as string).toLocaleTimeString('en-GB', {
             timeZone: 'Asia/Ho_Chi_Minh',
           });
 
@@ -75,12 +84,13 @@ export function useMetricsStream(url: string) {
 
           setDevices((prev) => {
             const existing = prev[device_id];
-            const points = existing
+            const isSameDevice = existing !== undefined;
+            const points = isSameDevice
               ? [...existing.points.slice(-(MAX_POINTS - 1)), point]
               : [point];
 
+            // Replace the entire map — only one device is active at a time.
             return {
-              ...prev,
               [device_id]: {
                 deviceId: device_id,
                 points,
@@ -108,5 +118,9 @@ export function useMetricsStream(url: string) {
     };
   }, [url]);
 
-  return { devices, connected };
+  function dismissApproval(deviceId: string) {
+    setPendingApprovals((prev) => prev.filter((id) => id !== deviceId));
+  }
+
+  return { devices, connected, pendingApprovals, dismissApproval };
 }

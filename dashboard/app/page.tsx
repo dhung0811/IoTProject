@@ -8,6 +8,7 @@ import { useAlerts } from '@/hooks/useAlerts';
 import { getDailyQuote } from '@/lib/quotes';
 
 import ThemeToggle from '@/components/ThemeToggle';
+import DeviceApprovalModal from '@/components/DeviceApprovalModal';
 import ConnectionBar from '@/components/ConnectionBar';
 import HeartRateCard from '@/components/HeartRateCard';
 import SpO2Card from '@/components/SpO2Card';
@@ -115,7 +116,7 @@ const SECTION_TITLES: Record<TabId, string> = {
 };
 
 export default function HomePage() {
-  const { devices, connected } = useMetricsStream(WS_URL);
+  const { devices, connected, pendingApprovals, dismissApproval } = useMetricsStream(WS_URL);
   const { alerts, dismiss, clearAll } = useAlerts(devices);
   const [tab, setTab] = useState<TabId>('home');
 
@@ -171,6 +172,7 @@ export default function HomePage() {
       </div>
 
       <BottomNav active={tab} onChange={setTab} alertCount={alerts.length} />
+      <DeviceApprovalModal pendingDevices={pendingApprovals} onDismiss={dismissApproval} />
     </div>
   );
 }
