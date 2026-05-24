@@ -34,8 +34,15 @@ async def handle_message(message: aio_pika.IncomingMessage) -> None:
 
 
 async def main() -> None:
-    logger.info("Connecting to RabbitMQ...")
-    connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+    for attempt in range(1, 11):
+        try:
+            logger.info("Connecting to RabbitMQ (attempt %d)...", attempt)
+            connection = await aio_pika.connect_robust(settings.rabbitmq_url, timeout=10)
+            break
+        except Exception:
+            if attempt == 10:
+                raise
+            await asyncio.sleep(5)
 
     async with connection:
         channel = await connection.channel()
