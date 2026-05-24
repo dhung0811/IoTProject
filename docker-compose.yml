@@ -23,6 +23,7 @@ services:
       context: ./dashboard
       args:
         NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     ports:
       - "${DASHBOARD_PORT}:3000"
     environment:
