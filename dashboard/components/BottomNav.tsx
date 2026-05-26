@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 
-export type TabId = 'home' | 'trends' | 'alerts' | 'chat' | 'profile';
+export type TabId = 'home' | 'trends' | 'alerts' | 'chat' | 'profile' | 'devices';
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
   {
@@ -42,6 +42,15 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     ),
   },
   {
+    id: 'devices', label: 'Devices',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+      </svg>
+    ),
+  },
+  {
     id: 'profile', label: 'Profile',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,9 +65,10 @@ interface Props {
   active: TabId;
   onChange: (tab: TabId) => void;
   alertCount?: number;
+  pendingCount?: number;
 }
 
-export default function BottomNav({ active, onChange, alertCount = 0 }: Props) {
+export default function BottomNav({ active, onChange, alertCount = 0, pendingCount = 0 }: Props) {
   return (
     <div className="fixed bottom-4 left-0 right-0 flex justify-center px-4 z-50 pointer-events-none">
       <motion.nav
@@ -93,6 +103,12 @@ export default function BottomNav({ active, onChange, alertCount = 0 }: Props) {
                   <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
                     style={{ background: '#ef4444', color: '#fff' }}>
                     {alertCount > 9 ? '9+' : alertCount}
+                  </span>
+                )}
+                {tab.id === 'devices' && pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
+                    style={{ background: '#eab308', color: '#000' }}>
+                    {pendingCount > 9 ? '9+' : pendingCount}
                   </span>
                 )}
               </span>

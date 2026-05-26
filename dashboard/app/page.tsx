@@ -21,6 +21,7 @@ import TrendsSection from '@/components/sections/TrendsSection';
 import AlertsSection from '@/components/sections/AlertsSection';
 import ChatSection from '@/components/sections/ChatSection';
 import ProfileSection from '@/components/sections/ProfileSection';
+import DevicesSection from '@/components/sections/DevicesSection';
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:8082/ws';
 
@@ -54,12 +55,6 @@ function EmptyState({ wsConnected }: { wsConnected: boolean }) {
 
 function HomeSection({ device, wsConnected }: { device: ReturnType<typeof useMetricsStream>['devices'][string] | null; wsConnected: boolean }) {
   const quote = getDailyQuote();
-  const greeting = (() => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 18) return 'Good afternoon';
-    return 'Good evening';
-  })();
 
   return (
     <>
@@ -112,15 +107,24 @@ const SECTION_TITLES: Record<TabId, string> = {
   trends:  'Trends',
   alerts:  'Alerts',
   chat:    'Chat',
+  devices: 'Devices',
   profile: 'Profile',
 };
 
 export default function HomePage() {
-  const { devices, connected, pendingApprovals, dismissApproval } = useMetricsStream(WS_URL);
+  const { devices, connected, pendingApprovals, dismissApproval, removeDevice } = useMetricsStream(WS_URL);
   const { alerts, dismiss, clearAll } = useAlerts(devices);
   const [tab, setTab] = useState<TabId>('home');
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
-  const device = Object.values(devices)[0] ?? null;
+  const deviceIds = Object.keys(devices);
+
+  // Auto-select first device that appears; don't auto-switch on new arrivals.
+  const effectiveId = selectedDeviceId && devices[selectedDeviceId]
+    ? selectedDeviceId
+    : (deviceIds[0] ?? null);
+
+  const device = effectiveId ? devices[effectiveId] ?? null : null;
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -128,6 +132,11 @@ export default function HomePage() {
     if (h < 18) return 'Good afternoon';
     return 'Good evening';
   })();
+
+  function handleRemoveDevice(id: string) {
+    removeDevice(id);
+    if (selectedDeviceId === id) setSelectedDeviceId(null);
+  }
 
   return (
     <div className="min-h-screen pb-28">
@@ -145,6 +154,16 @@ export default function HomePage() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            {/* show active device chip on non-devices tabs when a device is selected */}
+            {tab !== 'devices' && device && (
+              <button
+                onClick={() => setTab('devices')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-mono transition-opacity active:opacity-70"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--fg-3)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                <span className="truncate max-w-[100px]">{device.deviceId}</span>
+              </button>
+            )}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs"
               style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
               <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-red-500'}`} />
@@ -165,13 +184,28 @@ export default function HomePage() {
             {tab === 'trends'  && <TrendsSection device={device} />}
             {tab === 'alerts'  && <AlertsSection alerts={alerts} onDismiss={dismiss} onClearAll={clearAll} />}
             {tab === 'chat'    && <ChatSection device={device} />}
+            {tab === 'devices' && (
+              <DevicesSection
+                devices={devices}
+                pendingApprovals={pendingApprovals}
+                selectedDeviceId={effectiveId}
+                onSelect={setSelectedDeviceId}
+                onRemove={handleRemoveDevice}
+                onDismissApproval={dismissApproval}
+              />
+            )}
             {tab === 'profile' && <ProfileSection device={device} alerts={alerts} />}
           </motion.div>
         </AnimatePresence>
 
       </div>
 
-      <BottomNav active={tab} onChange={setTab} alertCount={alerts.length} />
+      <BottomNav
+        active={tab}
+        onChange={setTab}
+        alertCount={alerts.length}
+        pendingCount={pendingApprovals.length}
+      />
       <DeviceApprovalModal pendingDevices={pendingApprovals} onDismiss={dismissApproval} />
     </div>
   );
