@@ -37,6 +37,9 @@ export function useMetricsStream(url: string) {
   const [pendingApprovals, setPendingApprovals] = useState<string[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks which device we're waiting on after a switch request; stale messages
+  // from any other device are discarded until the expected device's first metric arrives.
+  const pendingNewDeviceRef = useRef<string | null>(null);
 
   useEffect(() => {
     let destroyed = false;
@@ -61,9 +64,12 @@ export function useMetricsStream(url: string) {
 
           if (msg.type === 'device_approval_request') {
             const deviceId = msg.device_id as string;
+            pendingNewDeviceRef.current = deviceId;
             setPendingApprovals((prev) =>
               prev.includes(deviceId) ? prev : [...prev, deviceId]
             );
+            // Clear old device immediately — it's being displaced.
+            setDevices({});
             return;
           }
 
@@ -75,6 +81,15 @@ export function useMetricsStream(url: string) {
             status?: string;
             connected?: boolean;
           };
+
+          // Discard stale metrics from the old device while waiting for the new one.
+          if (pendingNewDeviceRef.current !== null && device_id !== pendingNewDeviceRef.current) {
+            return;
+          }
+          // First metric from the expected new device — gate is cleared.
+          if (pendingNewDeviceRef.current === device_id) {
+            pendingNewDeviceRef.current = null;
+          }
 
           const time = new Date(timestamp as string).toLocaleTimeString('en-GB', {
             timeZone: 'Asia/Ho_Chi_Minh',
