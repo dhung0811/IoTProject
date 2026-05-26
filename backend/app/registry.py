@@ -19,33 +19,29 @@ class DeviceRecord:
     event:      asyncio.Event   = field(default_factory=asyncio.Event)
 
 
-# Only one device may be active at a time. Any new connect request (including
-# from a previously approved device) replaces the current slot and requires
-# fresh approval.
-_current: DeviceRecord | None = None
+_devices: dict[str, DeviceRecord] = {}
 
 
 def get_status(device_id: str) -> DeviceStatus | None:
-    if _current is None or _current.device_id != device_id:
-        return None
-    return _current.status
+    rec = _devices.get(device_id)
+    return rec.status if rec else None
 
 
 def register_pending(device_id: str) -> DeviceRecord:
-    global _current
-    _current = DeviceRecord(device_id=device_id)
-    return _current
+    rec = DeviceRecord(device_id=device_id)
+    _devices[device_id] = rec
+    return rec
 
 
 def decide(device_id: str, approved: bool) -> bool:
-    global _current
-    if _current is None or _current.device_id != device_id:
+    rec = _devices.get(device_id)
+    if rec is None:
         return False
-    _current.status = DeviceStatus.APPROVED if approved else DeviceStatus.DENIED
-    _current.decided_at = datetime.now(timezone.utc)
-    _current.event.set()
+    rec.status = DeviceStatus.APPROVED if approved else DeviceStatus.DENIED
+    rec.decided_at = datetime.now(timezone.utc)
+    rec.event.set()
     return True
 
 
 def get_all() -> list[DeviceRecord]:
-    return [_current] if _current else []
+    return list(_devices.values())

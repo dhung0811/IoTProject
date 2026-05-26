@@ -146,7 +146,7 @@ async def main() -> None:
 
     tasks = [
         run_device(
-            device_id=f"dhung0811{i+1:02d}",
+            device_id=f"vanlinh{i+1:02d}",
             url=args.url,
             interval=args.interval,
             scenario=args.scenario,
