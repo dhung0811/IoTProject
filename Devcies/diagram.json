@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "author": "Nguyễn Văn Linh",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-aitewinrobot-esp32c3-supermini",
+      "id": "esp",
+      "top": -108.24,
+      "left": 167.27,
+      "attrs": {}
+    },
+    { "type": "wokwi-ili9341", "id": "lcd1", "top": -316, "left": -125.1, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc1", "top": -56.84, "left": -172.8, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd1", "top": 38.4, "left": -173.4, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd2", "top": -105.6, "left": 479.4, "attrs": {} },
+    { "type": "chip-max_30102", "id": "chip1", "top": -171.78, "left": 350.4, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc2", "top": -210.44, "left": 316.8, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "vcc1:VCC", "lcd1:VCC", "red", [ "v38.4", "h86.4" ] ],
+    [ "gnd1:GND", "lcd1:GND", "black", [ "v0", "h96" ] ],
+    [ "esp:5", "lcd1:MISO", "green", [ "v0", "h-67.2", "v105.6", "h-105.6" ] ],
+    [ "lcd1:LED", "vcc1:VCC", "green", [ "v48", "h-153.61" ] ],
+    [ "lcd1:SCK", "esp:4", "green", [ "v57.6", "h134.39", "v0", "h153.6", "v-96" ] ],
+    [ "lcd1:MOSI", "esp:6", "green", [ "v76.8", "h153.59", "v-134.4", "h-9.6" ] ],
+    [ "lcd1:CS", "esp:7", "green", [ "v86.4", "h192", "v-134.4" ] ],
+    [ "lcd1:RST", "esp:3", "green", [ "v105.6", "h297.6", "v-134.4", "h28.8" ] ],
+    [ "lcd1:D/C", "esp:2", "green", [ "v96", "h297.6", "v-115.2" ] ],
+    [ "chip1:GND", "gnd2:GND", "black", [ "v1.02", "h25.81" ] ],
+    [ "vcc2:VCC", "chip1:VIN", "red", [ "v0" ] ],
+    [ "chip1:SDA", "esp:8", "green", [ "h-211.2", "v76.8" ] ],
+    [ "chip1:SCL", "esp:9", "green", [ "h-201.6", "v96" ] ]
+  ],
+  "serialMonitor": { "collapse": false, "convertEol": false, "display": "auto", "newline": "lf" },
+  "dependencies": {}
+}

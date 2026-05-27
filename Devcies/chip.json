@@ -1,0 +1,37 @@
+{
+  "name": "max-30102",
+  "author": "Linh + ChatGPT",
+  "pins": [
+    "VIN",
+    "SCL",
+    "SDA",
+    "GND",
+    "INT"
+  ],
+  "controls": [
+    {
+      "id": "finger",
+      "label": "Finger",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 1
+    },
+    {
+      "id": "beatAvg",
+      "label": "BPM",
+      "type": "range",
+      "min": 40,
+      "max": 180,
+      "step": 1
+    },
+    {
+      "id": "spo2Avg",
+      "label": "SpO2",
+      "type": "range",
+      "min": 80,
+      "max": 100,
+      "step": 1
+    }
+  ]
+}

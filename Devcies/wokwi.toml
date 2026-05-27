@@ -1,0 +1,13 @@
+[wokwi]
+version = 1
+firmware = '.pio\build\esp32c3_supermini\firmware.bin'
+elf = '.pio\build\esp32c3_supermini\firmware.elf'
+
+# Forward http://localhost:8180 to port 80 on the simulated ESP32:
+[[net.forward]]
+from = "localhost:8180"
+to = "target:80"
+
+[[chip]]
+name = 'max_30102'
+binary = 'chip.wasm'

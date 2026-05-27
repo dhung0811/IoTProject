@@ -1,0 +1,9 @@
+{
+    "idf.openOcdConfigs": [
+        "board/esp32c3-builtin.cfg"
+    ],
+    "cmake.sourceDirectory": "C:/Users/Nguyen Van Linh/Documents/PlatformIO/Projects/For_DHung/lib/Adafruit_BusIO",
+    "files.associations": {
+        "glcdfont.c": "cpp"
+    }
+}
